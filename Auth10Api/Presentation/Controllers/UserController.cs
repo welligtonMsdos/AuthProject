@@ -1,6 +1,7 @@
 ﻿using Auth10Api.Application.Common;
 using Auth10Api.Application.Dtos;
 using Auth10Api.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Auth10Api.Presentation.Controllers;
@@ -11,12 +12,27 @@ namespace Auth10Api.Presentation.Controllers;
 public class UserController : Controller
 {
     private readonly IUserService _service;
+    private readonly ITokenService _tokenService;
 
-    public UserController(IUserService service)
+    public UserController(IUserService service, ITokenService tokenService)
     {
         _service = service;
+        _tokenService = tokenService;
     }
 
+    [HttpPost("[Action]")]
+    public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
+    {
+        var user = await _service.GetDataLoginAsync(userLoginDto);
+
+        if (user == null) return Unauthorized();
+
+        var token = _tokenService.GenerateToken(user);
+
+        return Ok(Result<Task<string>>.Ok(token));
+    }
+
+    [Authorize]
     [HttpGet("[Action]")]
     public async Task<IActionResult> GetAllUsers()
     {
@@ -25,6 +41,7 @@ public class UserController : Controller
         return Ok(Result<IEnumerable<UserDto>>.Ok(users));
     }
 
+    [Authorize]
     [HttpGet("[Action]/{id}")]
     public async Task<IActionResult> GetUserById(string id)
     {
@@ -35,6 +52,7 @@ public class UserController : Controller
         return Ok(Result<UserDto>.Ok(user));
     }
 
+    [Authorize]
     [HttpGet("[Action]/{email}")]
     public async Task<IActionResult> GetUserByEmail(string email)
     {
@@ -45,6 +63,7 @@ public class UserController : Controller
         return Ok(Result<UserDto>.Ok(user));
     }
 
+    [Authorize]
     [HttpPost("[Action]")]
     public async Task<IActionResult> AddUser([FromBody] UserCreateDto user)
     {
@@ -53,6 +72,7 @@ public class UserController : Controller
         return CreatedAtAction(nameof(GetUserById), new { id = newUser._id }, Result<UserDto>.Ok(newUser, "User successfully created!"));
     }
 
+    [Authorize]
     [HttpPut("[Action]")]
     public async Task<IActionResult> UpdateUser([FromBody] UserUpdateDto user)
     {
@@ -64,6 +84,7 @@ public class UserController : Controller
         return Ok(Result<UserDto>.Ok(updateUser, "User successfully updated!"));
     }
 
+    [Authorize]
     [HttpDelete("[Action]/{id}")]
     public async Task<IActionResult> DeleteUser(string id)
     {

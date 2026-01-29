@@ -9,6 +9,7 @@
       - "5011:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - JwtSettings__Key=${JwtSettings__Key} 
     volumes:
       - ./dataprotection-keys:/home/app/.aspnet/DataProtection-Keys  
     networks:
