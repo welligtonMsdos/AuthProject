@@ -3,6 +3,8 @@ using Auth10Api.Application.Dtos;
 using Auth10Api.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
+using System.Runtime.CompilerServices;
 
 namespace Auth10Api.Presentation.Controllers;
 
@@ -13,11 +15,17 @@ public class UserController : Controller
 {
     private readonly IUserService _service;
     private readonly ITokenService _tokenService;
-
-    public UserController(IUserService service, ITokenService tokenService)
+    private readonly IRabbitMQService _rabbitMQService;
+    private readonly IMongoClient _mongoClient;
+    public UserController(IUserService service, 
+                          ITokenService tokenService,
+                          IRabbitMQService rabbitMQService,
+                          IMongoClient mongoClient)
     {
         _service = service;
         _tokenService = tokenService;
+        _rabbitMQService = rabbitMQService;
+        _mongoClient = mongoClient;
     }
 
     [HttpPost("[Action]")]
@@ -67,9 +75,37 @@ public class UserController : Controller
     [HttpPost("[Action]")]
     public async Task<IActionResult> AddUser([FromBody] UserCreateDto user)
     {
-        var newUser = await _service.AddUserAsync(user);
+        using var session = await _mongoClient.StartSessionAsync();
 
-        return CreatedAtAction(nameof(GetUserById), new { id = newUser._id }, Result<UserDto>.Ok(newUser, "User successfully created!"));
+        session.StartTransaction();
+
+        try
+        {
+            var newUser = await _service.AddUserAsync(user, session);
+
+            await _rabbitMQService.AddUserDtoAsync(newUser);
+
+            await session.CommitTransactionAsync();
+
+            return CreatedAtAction(
+                nameof(GetUserById),
+                new { id = newUser._id },
+                Result<UserDto>.Ok(newUser, "User successfully created!")
+        );
+        }
+        catch (Exception ex)
+        {
+            if (session.IsInTransaction)
+                await session.AbortTransactionAsync();
+
+            throw;
+        }
+
+        //var newUser = await _service.AddUserAsync(user);
+
+        //var resultRabbitMQ = await _rabbitMQService.AddUserDtoAsync(newUser);
+
+        //return CreatedAtAction(nameof(GetUserById), new { id = newUser._id }, Result<UserDto>.Ok(newUser, "User successfully created!"));
     }
 
     [Authorize]

@@ -7,6 +7,7 @@ using Auth10Api.Infrastruture.Middleware;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Driver;
 using Scalar.AspNetCore;
 using System.Text;
 
@@ -36,6 +37,8 @@ builder.Services.AddOpenApi();
 
 var secret = Environment.GetEnvironmentVariable("JwtSettings__Key");
 
+secret = "0BW0jijh2Iq+GP6iW/y4OOuIghLmQy3DMstHDrVFShI=";
+
 if (string.IsNullOrEmpty(secret) || secret.Length < 32)
 {    
     throw new InvalidOperationException("JWT key is missing or too short (minimum 32 characters).");
@@ -59,7 +62,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddSingleton<AuthContext>();
+builder.Services.AddSingleton<IMongoClient>(sp => {
+    var connectionString = builder.Configuration.GetValue<string>("MongoDB:ConnectionString");
+    return new MongoClient(connectionString);
+});
+
+builder.Services.AddScoped<AuthContext>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

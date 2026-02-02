@@ -3,6 +3,7 @@ using Auth10Api.Application.Interfaces;
 using Auth10Api.Domain.Entities;
 using Auth10Api.Domain.Interfaces;
 using AutoMapper;
+using MongoDB.Driver;
 
 namespace Auth10Api.Application.Services;
 
@@ -18,7 +19,7 @@ public class UserService : IUserService
         _mapper = mapper;
     }
 
-    public async Task<UserDto> AddUserAsync(UserCreateDto userCreateDto)
+    public async Task<UserDto> AddUserAsync(UserCreateDto userCreateDto, IClientSessionHandle session)
     {
         var user = _mapper.Map<User>(userCreateDto);
 
@@ -28,7 +29,7 @@ public class UserService : IUserService
 
         user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
 
-        return _mapper.Map<UserDto>(await _repository.AddUserAsync(user));
+        return _mapper.Map<UserDto>(await _repository.AddUserAsync(user, session));
     }
 
     public async Task<bool> DeleteUserByIdAsync(string id)

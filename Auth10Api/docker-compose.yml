@@ -1,7 +1,22 @@
 ﻿services:
 
+  rabbitmq:
+    image: rabbitmq:4.0-management
+    container_name: rabbitmq_server
+    hostname: rabbit
+    ports:
+      - "5672:5672"   
+      - "15672:15672" 
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - tom-auth-net
+
   auth10api:    
     container_name: auth10api
+    depends_on:
+      - rabbitmq
     build:
       context: .
       dockerfile: Dockerfile 
@@ -10,6 +25,9 @@
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - JwtSettings__Key=${JwtSettings__Key} 
+      - RabbitMQ__HostName=rabbit 
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
     volumes:
       - ./dataprotection-keys:/home/app/.aspnet/DataProtection-Keys  
     networks:
@@ -17,4 +35,4 @@
 
 networks:
   tom-auth-net:
-    external: true
+    driver: bridge

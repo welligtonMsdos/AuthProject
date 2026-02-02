@@ -1,11 +1,12 @@
 ﻿using Auth10Api.Application.Dtos;
 using Auth10Api.Domain.Entities;
+using MongoDB.Driver;
 
 namespace Auth10Api.Domain.Interfaces;
 
 public interface IUserRepository: IRepository
 {
-    Task<User> AddUserAsync(User user);
+    Task<User> AddUserAsync(User user, IClientSessionHandle session);
     Task<bool> DeleteUserByIdAsync(string id);
     Task<User> UpdateUserAsync(User userUpdated);
     Task<ICollection<User>> GetUsersAsync();

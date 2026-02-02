@@ -15,9 +15,9 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
-    public async Task<User> AddUserAsync(User user)
+    public async Task<User> AddUserAsync(User user, IClientSessionHandle session)
     {
-        await _context.Users.InsertOneAsync(user);
+        await _context.Users.InsertOneAsync(session, user);
 
         return user;
     }
