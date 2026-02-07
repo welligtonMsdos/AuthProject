@@ -1,13 +1,15 @@
 ﻿using Auth10Api.Domain.Entities;
 using MongoDB.Driver;
 
-namespace Auth10Api.Infrastruture.Data;
+namespace Auth10Api.Infrastructure.Data;
 
 public class AuthContext
 {
     private readonly IMongoDatabase _database;
 
     public IMongoCollection<User> Users => _database.GetCollection<User>("User");
+
+    public IMongoCollection<OutboxMessage> OutboxMessages => _database.GetCollection<OutboxMessage>("OutboxMessage");
 
     public AuthContext(IMongoClient client, IConfiguration config)
     {   

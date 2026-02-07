@@ -4,13 +4,9 @@ using MongoDB.Driver;
 
 namespace Auth10Api.Domain.Interfaces;
 
-public interface IUserRepository: IRepository
-{
-    Task<User> AddUserAsync(User user, IClientSessionHandle session);
-    Task<bool> DeleteUserByIdAsync(string id);
-    Task<User> UpdateUserAsync(User userUpdated);
-    Task<ICollection<User>> GetUsersAsync();
-    Task<User> GetUserByIdAsync(string id);
-    Task<User> GetUserByEmailAsync(string email);
+public interface IUserRepository: IRepository<User>
+{   
+    Task<User> GetByEmailAsync(string email);
     Task<User> GetDataLoginAsync(UserLoginDto userLoginDto);
+    Task<bool> AddOutboxMessage(OutboxMessage outboxMessage, IClientSessionHandle session);   
 }

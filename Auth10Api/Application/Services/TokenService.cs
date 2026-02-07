@@ -13,7 +13,7 @@ public class TokenService : ITokenService
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        var keyVault = Environment.GetEnvironmentVariable("JwtSettings__Key");
+        var keyVault = Environment.GetEnvironmentVariable("JwtSettings__Key");       
 
         var key = Encoding.ASCII.GetBytes(keyVault);
 

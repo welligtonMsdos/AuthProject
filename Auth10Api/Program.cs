@@ -1,9 +1,9 @@
-using Auth10Api.Application.Interfaces;
 using Auth10Api.Application.Validators;
-using Auth10Api.Domain.Interfaces;
-using Auth10Api.Infrastruture.Data;
-using Auth10Api.Infrastruture.Filters;
-using Auth10Api.Infrastruture.Middleware;
+using Auth10Api.Infrastructure;
+using Auth10Api.Infrastructure.BackgroundServices;
+using Auth10Api.Infrastructure.Data;
+using Auth10Api.Infrastructure.Filters;
+using Auth10Api.Infrastructure.Middleware;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -37,12 +37,8 @@ builder.Services.AddOpenApi();
 
 var secret = Environment.GetEnvironmentVariable("JwtSettings__Key");
 
-secret = "0BW0jijh2Iq+GP6iW/y4OOuIghLmQy3DMstHDrVFShI=";
-
 if (string.IsNullOrEmpty(secret) || secret.Length < 32)
-{    
     throw new InvalidOperationException("JWT key is missing or too short (minimum 32 characters).");
-}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -63,7 +59,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<IMongoClient>(sp => {
-    var connectionString = builder.Configuration.GetValue<string>("MongoDB:ConnectionString");
+
+    var connectionString = builder.Configuration.GetConnectionString("AuthConnection");
+    
     return new MongoClient(connectionString);
 });
 
@@ -71,18 +69,9 @@ builder.Services.AddScoped<AuthContext>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-builder.Services.Scan(scan =>
-{
-    scan.FromAssemblyOf<IService>()
-    .AddClasses(c => c.AssignableTo<IService>())
-    .AsImplementedInterfaces()
-    .WithScopedLifetime();
+builder.Services.AddHostedService<OutboxWorker>();
 
-    scan.FromAssemblyOf<IRepository>()
-    .AddClasses(c => c.AssignableTo<IRepository>())
-    .AsImplementedInterfaces()
-    .WithScopedLifetime();
-});
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 

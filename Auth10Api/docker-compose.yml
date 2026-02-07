@@ -24,6 +24,7 @@
       - "5011:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__AuthConnection=${ConnectionStrings__AuthConnection}       
       - JwtSettings__Key=${JwtSettings__Key} 
       - RabbitMQ__HostName=rabbit 
       - RabbitMQ__UserName=guest

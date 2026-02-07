@@ -3,7 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Auth10Api.Infrastruture.Filters;
+namespace Auth10Api.Infrastructure.Filters;
 
 public class ValidatorFilter : IAsyncActionFilter
 {

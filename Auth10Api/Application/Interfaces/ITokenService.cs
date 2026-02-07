@@ -2,7 +2,7 @@
 
 namespace Auth10Api.Application.Interfaces;
 
-public interface ITokenService:IService
+public interface ITokenService
 {
     Task<string> GenerateToken(UserDataLoginDto userDataLoginDto);
 }

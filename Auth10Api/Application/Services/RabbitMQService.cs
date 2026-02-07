@@ -1,5 +1,5 @@
-﻿using Auth10Api.Application.Dtos;
-using Auth10Api.Application.Interfaces;
+﻿using Auth10Api.Application.Interfaces;
+using Auth10Api.Domain.Entities;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
@@ -15,11 +15,11 @@ public class RabbitMQService : IRabbitMQService
     {
         _factory = new ConnectionFactory
         {
-            HostName = configuration.GetValue<string>("RabbitMQ:HostName") ?? "localhost",
+            HostName = configuration.GetValue<string>("RabbitMQ:HostName") ?? "localhost",           
             AutomaticRecoveryEnabled = true
         };
     }
-    public async Task<bool> AddUserDtoAsync(UserDto userDto)
+    public async Task<bool> AddUserDtoAsync(User user)
     {
         await using var connection = await _factory.CreateConnectionAsync();
         await using var channel = await connection.CreateChannelAsync();
@@ -31,7 +31,7 @@ public class RabbitMQService : IRabbitMQService
             autoDelete: false,
             arguments: null);
 
-        var message = JsonSerializer.Serialize(userDto);
+        var message = JsonSerializer.Serialize(user);
         var body = Encoding.UTF8.GetBytes(message);
 
         await channel.BasicPublishAsync(
