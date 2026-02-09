@@ -3,41 +3,78 @@ using Auth10Api.Application.Interfaces;
 using Auth10Api.Domain.Entities;
 using Auth10Api.Domain.Interfaces;
 using AutoMapper;
+using MongoDB.Driver;
+using System.Text.Json;
 
 namespace Auth10Api.Application.Services;
 
 public class UserService : IUserService
 {
     private readonly IUserRepository _repository;
-    private readonly IMapper _mapper;
+    private readonly IMapper _mapper;    
+    private readonly IMongoClient _mongoClient;
 
     public UserService(IUserRepository repository, 
-                       IMapper mapper)
+                       IMapper mapper,
+                       IMongoClient mongoClient)
     {
         _repository = repository;
-        _mapper = mapper;
+        _mapper = mapper;       
+        _mongoClient = mongoClient;
     }
 
-    public async Task<UserDto> AddUserAsync(UserCreateDto userCreateDto)
+    public async Task<UserDto> CreateAsync(UserCreateDto userCreateDto)
     {
-        var user = _mapper.Map<User>(userCreateDto);
+        using var session = await _mongoClient.StartSessionAsync();
 
-        user.Active = true;
+        session.StartTransaction();
 
-        user.LastAccess = DateTime.Now;
+        try
+        {
+            var user = _mapper.Map<User>(userCreateDto);
 
-        user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+            user.Active = true;
 
-        return _mapper.Map<UserDto>(await _repository.AddUserAsync(user));
+            user.LastAccess = DateTime.Now;
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+
+            var newUser = await _repository.CreateAsync(user, session);
+
+            var outboxMsg = new OutboxMessage
+            {
+                Id = Guid.NewGuid(),
+                Type = "UserCreated",
+                Content = JsonSerializer.Serialize(newUser),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _repository.AddOutboxMessage(outboxMsg, session);
+            
+            await session.CommitTransactionAsync();
+
+            return _mapper.Map<UserDto>(newUser);
+        }
+        catch (Exception)
+        {
+            await session.AbortTransactionAsync();
+            throw;
+        } 
     }
 
-    public async Task<bool> DeleteUserByIdAsync(string id)
+    public async Task<ICollection<UserDto>> GetAllAsync()
     {
-        var user = await _repository.GetUserByIdAsync(id);
+        return _mapper.Map<ICollection<UserDto>>(await _repository.GetAllAsync());
+    }
 
-        if (user == null) throw new Exception("User not found");
+    public async Task<UserDto> GetByIdAsync(string id)
+    {
+        return _mapper.Map<UserDto>(await _repository.GetByIdAsync(id));
+    }
 
-        return await _repository.DeleteUserByIdAsync(id);
+    public async Task<UserDto> GetByEmailAsync(string email)
+    {
+        return _mapper.Map<UserDto>(await _repository.GetByEmailAsync(email));
     }
 
     public async Task<UserDataLoginDto> GetDataLoginAsync(UserLoginDto userLoginDto)
@@ -49,25 +86,19 @@ public class UserService : IUserService
         return _mapper.Map<UserDataLoginDto>(user);
     }
 
-    public async Task<UserDto> GetUserByEmailAsync(string email)
-    {
-        return _mapper.Map<UserDto>(await _repository.GetUserByEmailAsync(email));
-    }
-
-    public async Task<UserDto> GetUserByIdAsync(string id)
-    {
-        return _mapper.Map<UserDto>(await _repository.GetUserByIdAsync(id));
-    }
-
-    public async Task<ICollection<UserDto>> GetUsersAsync()
-    {
-        return _mapper.Map<ICollection<UserDto>>(await _repository.GetUsersAsync());
-    }
-
-    public async Task<UserDto> UpdateUserAsync(UserUpdateDto userUpdated)
+    public async Task<UserDto> UpdateAsync(UserUpdateDto userUpdated)
     {
         var user = _mapper.Map<User>(userUpdated);
 
-        return _mapper.Map<UserDto>(await _repository.UpdateUserAsync(user));
+        return _mapper.Map<UserDto>(await _repository.UpdateAsync(user));
+    }
+
+    public async Task<bool> DeleteByIdAsync(string id)
+    {
+        var user = await _repository.GetByIdAsync(id);
+
+        if (user == null) throw new Exception("User not found");
+
+        return await _repository.DeleteByIdAsync(id);
     }
 }

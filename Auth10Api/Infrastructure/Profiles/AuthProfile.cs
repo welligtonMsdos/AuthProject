@@ -2,7 +2,7 @@
 using Auth10Api.Domain.Entities;
 using AutoMapper;
 
-namespace Auth10Api.Infrastruture.Profiles;
+namespace Auth10Api.Infrastructure.Profiles;
 
 public class AuthProfile: Profile
 {

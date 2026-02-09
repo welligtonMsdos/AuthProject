@@ -2,7 +2,7 @@
 using System.Net;
 using System.Text.Json;
 
-namespace Auth10Api.Infrastruture.Middleware;
+namespace Auth10Api.Infrastructure.Middleware;
 
 public class ErrorHandlingMiddleware
 {

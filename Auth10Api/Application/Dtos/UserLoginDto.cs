@@ -3,5 +3,6 @@
 public sealed record UserLoginDto(string Email,
                                   string Password)
 {
-    public UserLoginDto() : this(string.Empty, string.Empty) { }
+    public UserLoginDto() : this(string.Empty, 
+                                 string.Empty) { }
 }

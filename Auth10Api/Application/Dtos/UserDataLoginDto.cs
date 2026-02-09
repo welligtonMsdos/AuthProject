@@ -5,5 +5,8 @@ public sealed record UserDataLoginDto(string _id,
                                       string Email,
                                       string Token)
 {
-    public UserDataLoginDto() : this(string.Empty, string.Empty, string.Empty, string.Empty) { }
+    public UserDataLoginDto() : this(string.Empty, 
+                                     string.Empty, 
+                                     string.Empty, 
+                                     string.Empty) { }
 }

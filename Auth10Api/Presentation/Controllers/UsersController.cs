@@ -9,15 +9,16 @@ namespace Auth10Api.Presentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UserController : Controller
+public class UsersController : ControllerBase
 {
     private readonly IUserService _service;
     private readonly ITokenService _tokenService;
-
-    public UserController(IUserService service, ITokenService tokenService)
+   
+    public UsersController(IUserService service, 
+                           ITokenService tokenService)
     {
         _service = service;
-        _tokenService = tokenService;
+        _tokenService = tokenService;       
     }
 
     [HttpPost("[Action]")]
@@ -33,19 +34,32 @@ public class UserController : Controller
     }
 
     [Authorize]
-    [HttpGet("[Action]")]
-    public async Task<IActionResult> GetAllUsers()
+    [HttpPost]
+    public async Task<IActionResult> Post([FromBody] UserCreateDto userCreateDto)
     {
-        var users = await _service.GetUsersAsync();
+        var newUser = await _service.CreateAsync(userCreateDto);
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = newUser._id.ToString() },
+            Result<UserDto>.Ok(newUser, "User successfully created!")
+        );
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var users = await _service.GetAllAsync();
 
         return Ok(Result<IEnumerable<UserDto>>.Ok(users));
     }
 
     [Authorize]
-    [HttpGet("[Action]/{id}")]
-    public async Task<IActionResult> GetUserById(string id)
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(string id)
     {
-        var user = await _service.GetUserByIdAsync(id);
+        var user = await _service.GetByIdAsync(id);
 
         if (user == null) return NotFound(Result<object>.Failure("User not found."));
 
@@ -53,30 +67,21 @@ public class UserController : Controller
     }
 
     [Authorize]
-    [HttpGet("[Action]/{email}")]
-    public async Task<IActionResult> GetUserByEmail(string email)
+    [HttpGet("email/{email}")]
+    public async Task<IActionResult> GetByEmail(string email)
     {
-        var user = await _service.GetUserByEmailAsync(email);
+        var user = await _service.GetByEmailAsync(email);
 
         if (user == null) return NotFound(Result<object>.Failure("User not found."));
 
         return Ok(Result<UserDto>.Ok(user));
-    }
+    }    
 
     [Authorize]
-    [HttpPost("[Action]")]
-    public async Task<IActionResult> AddUser([FromBody] UserCreateDto user)
+    [HttpPut]
+    public async Task<IActionResult> Update([FromBody] UserUpdateDto userUpdateDto)
     {
-        var newUser = await _service.AddUserAsync(user);
-
-        return CreatedAtAction(nameof(GetUserById), new { id = newUser._id }, Result<UserDto>.Ok(newUser, "User successfully created!"));
-    }
-
-    [Authorize]
-    [HttpPut("[Action]")]
-    public async Task<IActionResult> UpdateUser([FromBody] UserUpdateDto user)
-    {
-        var updateUser = await _service.UpdateUserAsync(user);
+        var updateUser = await _service.UpdateAsync(userUpdateDto);
 
         if (updateUser == null)
             return NotFound(Result<object>.Failure("User not found for update."));
@@ -85,10 +90,10 @@ public class UserController : Controller
     }
 
     [Authorize]
-    [HttpDelete("[Action]/{id}")]
-    public async Task<IActionResult> DeleteUser(string id)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id)
     {
-        var deletedUser = await _service.DeleteUserByIdAsync(id);
+        var deletedUser = await _service.DeleteByIdAsync(id);
 
         if (!deletedUser)
             return NotFound(Result<object>.Failure("User not found for deletion."));
