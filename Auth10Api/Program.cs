@@ -24,15 +24,13 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add services to the container.
-
 builder.Services.AddValidatorsFromAssemblyContaining<UserCreateValidator>();
 
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ValidatorFilter>();
 });
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 builder.Services.AddOpenApi();
 
 var secret = Environment.GetEnvironmentVariable("JwtSettings__Key");

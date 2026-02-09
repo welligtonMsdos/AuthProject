@@ -11,7 +11,8 @@ public class AuthContext
 
     public IMongoCollection<OutboxMessage> OutboxMessages => _database.GetCollection<OutboxMessage>("OutboxMessage");
 
-    public AuthContext(IMongoClient client, IConfiguration config)
+    public AuthContext(IMongoClient client, 
+                       IConfiguration config)
     {   
         var dbName = config.GetValue<string>("MongoDB:DatabaseName");
 

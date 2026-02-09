@@ -94,7 +94,8 @@ public class UserRepository : IUserRepository
         }
     }
 
-    public async Task<bool> AddOutboxMessage(OutboxMessage outboxMessage, IClientSessionHandle session)
+    public async Task<bool> AddOutboxMessage(OutboxMessage outboxMessage,                  
+                                             IClientSessionHandle session)
     {
         try
         {

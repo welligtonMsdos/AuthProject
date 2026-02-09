@@ -101,5 +101,4 @@ public class UserService : IUserService
 
         return await _repository.DeleteByIdAsync(id);
     }
-
 }

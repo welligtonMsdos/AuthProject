@@ -34,13 +34,13 @@ public class OutboxWorker : BackgroundService
 
                 await ProcessOutboxMessages(rabbitMQService, stoppingToken);
             }
-
-            // Wait 5 seconds before the next check
+          
             await Task.Delay(5000, stoppingToken);
         }
     }
 
-    private async Task ProcessOutboxMessages(IRabbitMQService rabbitMQService, CancellationToken stoppingToken)
+    private async Task ProcessOutboxMessages(IRabbitMQService rabbitMQService, 
+                                             CancellationToken stoppingToken)
     {
         var collection = _mongoClient.GetDatabase(_databaseName)
                                      .GetCollection<OutboxMessage>("OutboxMessage");
