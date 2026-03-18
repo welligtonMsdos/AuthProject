@@ -17,10 +17,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", builder =>
     {
-        builder.WithOrigins("http://localhost:4200")
-        .AllowCredentials()
-        .AllowAnyHeader()
-        .AllowAnyMethod();
+        builder.AllowAnyOrigin() 
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
@@ -48,6 +47,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
             ValidateIssuer = true,
+            //ValidIssuer = "http://13.59.37.186:5011",
             ValidIssuer = "http://localhost:5011",
             ValidateAudience = false,
             ValidateLifetime = true
@@ -65,8 +65,6 @@ builder.Services.AddSingleton<IMongoClient>(sp => {
 
 builder.Services.AddScoped<AuthContext>();
 
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
 builder.Services.AddHostedService<OutboxWorker>();
 
 builder.Services.AddApplicationServices();
@@ -75,9 +73,6 @@ var app = builder.Build();
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
 app.MapOpenApi();
 
 app.MapScalarApiReference(options =>
@@ -93,8 +88,6 @@ app.MapScalarApiReference(options =>
                auth.Token = "your-bearer-token";
            });
 });
-
-//}
 
 app.UseCors("CorsPolicy");
 
