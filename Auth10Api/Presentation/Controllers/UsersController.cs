@@ -8,32 +8,17 @@ namespace Auth10Api.Presentation.Controllers;
 
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
     private readonly IUserService _service;
-    private readonly ITokenService _tokenService;
-
-    public UsersController(IUserService service,
-                           ITokenService tokenService)
+   
+    public UsersController(IUserService service)
     {
-        _service = service;
-        _tokenService = tokenService;
-    }
-
-    [HttpPost("[Action]")]
-    public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
-    {
-        var user = await _service.GetDataLoginAsync(userLoginDto);
-
-        if (user is null) return Unauthorized();
-
-        var token = _tokenService.GenerateToken(user);
-
-        return Ok(Result<Task<string>>.Ok(token));
-    }
-
-    [Authorize]
+        _service = service;       
+    } 
+   
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] UserCreateDto userCreateDto)
     {
@@ -45,8 +30,7 @@ public class UsersController : ControllerBase
             Result<UserDto>.Ok(newUser, "User successfully created!")
         );
     }
-
-    [Authorize]
+        
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] string? email)
     {
@@ -63,8 +47,7 @@ public class UsersController : ControllerBase
 
         return Ok(Result<IEnumerable<UserDto>>.Ok(users));
     }
-
-    [Authorize]
+   
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
@@ -74,8 +57,7 @@ public class UsersController : ControllerBase
 
         return Ok(Result<UserDto>.Ok(user));
     }
-
-    [Authorize]
+   
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(string id, [FromBody] UserUpdateDto userUpdateDto)
     {
@@ -86,8 +68,7 @@ public class UsersController : ControllerBase
 
         return Ok(Result<UserDto>.Ok(updateUser, "User successfully updated!"));
     }
-
-    [Authorize]
+   
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
