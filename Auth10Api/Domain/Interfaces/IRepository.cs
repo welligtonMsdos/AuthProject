@@ -5,9 +5,9 @@ namespace Auth10Api.Domain.Interfaces;
 
 public interface IRepository<T>
 {
-    Task<User> CreateAsync(T obj, IClientSessionHandle session);
-    Task<ICollection<T>> GetAllAsync();
+    Task<User> PostAsync(T obj, IClientSessionHandle session);
+    Task<ICollection<T>> GetAsync();
     Task<T> GetByIdAsync(string id);
-    Task<User> UpdateAsync(T obj);
-    Task<bool> DeleteByIdAsync(string id);   
+    Task<User> PutAsync(T obj);
+    Task<bool> DeleteAsync(string id);   
 }

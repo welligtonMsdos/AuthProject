@@ -15,15 +15,15 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
-    public async Task<User> CreateAsync(User obj, 
-                                        IClientSessionHandle session)
+    public async Task<User> PostAsync(User obj, 
+                                      IClientSessionHandle session)
     {
         await _context.Users.InsertOneAsync(session, obj);
 
         return obj;
     }
 
-    public async Task<ICollection<User>> GetAllAsync()
+    public async Task<ICollection<User>> GetAsync()
     {
         var users = await _context.Users.Find(u => u.Active).ToListAsync();
 
@@ -63,7 +63,7 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<User> UpdateAsync(User obj)
+    public async Task<User> PutAsync(User obj)
     {
         await _context.Users.UpdateOneAsync(
             u => u._id == obj._id,
@@ -77,7 +77,7 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<bool> DeleteByIdAsync(string id)
+    public async Task<bool> DeleteAsync(string id)
     {
         try
         {

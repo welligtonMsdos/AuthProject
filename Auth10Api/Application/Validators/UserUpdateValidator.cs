@@ -7,8 +7,6 @@ public class UserUpdateValidator : AbstractValidator<UserUpdateDto>
 {
     public UserUpdateValidator()
     {
-        RuleFor(x => x._id).NotEmpty().WithMessage("Id is required!");
-
         RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required!");
         RuleFor(x => x.Name).MinimumLength(3).WithMessage("Name must be at least 3 characters.");
         RuleFor(x => x.Name).MaximumLength(50).WithMessage("Name must be at most 50 characters.");

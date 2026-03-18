@@ -1,8 +1,10 @@
 ﻿using Auth10Api.Application.Dtos;
+using Auth10Api.Application.Extensions;
 using Auth10Api.Application.Interfaces;
+using Auth10Api.Application.Validators;
 using Auth10Api.Domain.Entities;
 using Auth10Api.Domain.Interfaces;
-using AutoMapper;
+using FluentValidation;
 using MongoDB.Driver;
 using System.Text.Json;
 
@@ -10,20 +12,23 @@ namespace Auth10Api.Application.Services;
 
 public class UserService : IUserService
 {
-    private readonly IUserRepository _repository;
-    private readonly IMapper _mapper;    
+    private readonly IUserRepository _repository;    
     private readonly IMongoClient _mongoClient;
+    private readonly UserCreateValidator _createValidator;
+    private readonly UserUpdateValidator _updateValidator;
 
-    public UserService(IUserRepository repository, 
-                       IMapper mapper,
-                       IMongoClient mongoClient)
+    public UserService(IUserRepository repository,                       
+                       IMongoClient mongoClient,
+                       UserCreateValidator createValidator,
+                       UserUpdateValidator updateValidator)
     {
-        _repository = repository;
-        _mapper = mapper;       
+        _repository = repository;              
         _mongoClient = mongoClient;
+        _createValidator = createValidator;
+        _updateValidator = updateValidator;
     }
 
-    public async Task<UserDto> CreateAsync(UserCreateDto userCreateDto)
+    public async Task<UserDto> PostAsync(UserCreateDto userCreateDto)
     {
         using var session = await _mongoClient.StartSessionAsync();
 
@@ -31,15 +36,17 @@ public class UserService : IUserService
 
         try
         {
-            var user = _mapper.Map<User>(userCreateDto);
+            await _createValidator.ValidateAndThrowAsync(userCreateDto);
 
-            user.Active = true;
+            var userCreated = userCreateDto.ToEntity();
 
-            user.LastAccess = DateTime.Now;
+            userCreated.Active = true;
 
-            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+            userCreated.LastAccess = DateTime.Now;
 
-            var newUser = await _repository.CreateAsync(user, session);
+            userCreated.Password = BCrypt.Net.BCrypt.HashPassword(userCreated.Password);
+
+            var newUser = await _repository.PostAsync(userCreated, session);
 
             var outboxMsg = new OutboxMessage
             {
@@ -53,52 +60,77 @@ public class UserService : IUserService
             
             await session.CommitTransactionAsync();
 
-            return _mapper.Map<UserDto>(newUser);
+            return newUser.ToUserDto();
         }
         catch (Exception)
         {
             await session.AbortTransactionAsync();
+
             throw;
         } 
     }
 
-    public async Task<ICollection<UserDto>> GetAllAsync()
+    public async Task<ICollection<UserDto>> GetAsync()
     {
-        return _mapper.Map<ICollection<UserDto>>(await _repository.GetAllAsync());
+        var user = await _repository.GetAsync();
+
+        ArgumentNullException.ThrowIfNull(user);
+
+        return user
+            .Select(e => e.ToUserDto())
+            .ToList();
     }
 
     public async Task<UserDto> GetByIdAsync(string id)
     {
-        return _mapper.Map<UserDto>(await _repository.GetByIdAsync(id));
+        ArgumentException.ThrowIfNullOrEmpty(id);
+
+        var user = await _repository.GetByIdAsync(id);
+
+        ArgumentNullException.ThrowIfNull(user);
+
+        return user.ToUserDto();
     }
 
     public async Task<UserDto> GetByEmailAsync(string email)
     {
-        return _mapper.Map<UserDto>(await _repository.GetByEmailAsync(email));
+        ArgumentException.ThrowIfNullOrEmpty(email);
+
+        var user = await _repository.GetByEmailAsync(email);        
+
+        return user.ToUserDto();
     }
 
     public async Task<UserDataLoginDto> GetDataLoginAsync(UserLoginDto userLoginDto)
     {
+        ArgumentNullException.ThrowIfNull(userLoginDto);
+
         var user = await _repository.GetDataLoginAsync(userLoginDto);
 
-        if (user == null) throw new Exception("User not found");
+        ArgumentNullException.ThrowIfNull(user);
 
-        return _mapper.Map<UserDataLoginDto>(user);
+        return user.ToDataLoginDto();
     }
 
-    public async Task<UserDto> UpdateAsync(UserUpdateDto userUpdated)
+    public async Task<UserDto> PutAsync(string id, UserUpdateDto userUpdated)
     {
-        var user = _mapper.Map<User>(userUpdated);
+        await _updateValidator.ValidateAndThrowAsync(userUpdated);
 
-        return _mapper.Map<UserDto>(await _repository.UpdateAsync(user));
+        var entity = await _repository.GetByIdAsync(id);        
+
+        entity.UpdateEntity(userUpdated);
+
+        await _repository.PutAsync(entity);
+
+        return entity.ToUserDto();
     }
 
-    public async Task<bool> DeleteByIdAsync(string id)
+    public async Task<bool> DeleteAsync(string id)
     {
         var user = await _repository.GetByIdAsync(id);
 
-        if (user == null) throw new Exception("User not found");
+        ArgumentNullException.ThrowIfNull(user);
 
-        return await _repository.DeleteByIdAsync(id);
+        return await _repository.DeleteAsync(id);
     }
 }
