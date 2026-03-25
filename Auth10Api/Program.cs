@@ -6,6 +6,7 @@ using Auth10Api.Infrastructure.Filters;
 using Auth10Api.Infrastructure.Middleware;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using Scalar.AspNetCore;
@@ -24,6 +25,11 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddValidatorsFromAssemblyContaining<UserCreateValidator>();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 builder.Services.AddControllers(options =>
 {

@@ -15,19 +15,18 @@ public class ValidatorFilter : IAsyncActionFilter
     }
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-    {        
-        var dto = context.ActionArguments.Values.FirstOrDefault();
+    {
+        // 1. Buscar apenas objetos que tenham um validador registrado
+        foreach (var argument in context.ActionArguments.Values)
+        {
+            if (argument == null) continue;
 
-        if (dto != null)
-        {           
-            var validatorType = typeof(IValidator<>).MakeGenericType(dto.GetType());
-
+            var validatorType = typeof(IValidator<>).MakeGenericType(argument.GetType());
             var validator = _serviceProvider.GetService(validatorType) as IValidator;
 
             if (validator != null)
             {
-                var validationContext = new ValidationContext<object>(dto);
-
+                var validationContext = new ValidationContext<object>(argument);
                 var validationResult = await validator.ValidateAsync(validationContext);
 
                 if (!validationResult.IsValid)
@@ -40,10 +39,16 @@ public class ValidatorFilter : IAsyncActionFilter
                         );
 
                     context.Result = new BadRequestObjectResult(Result<object>.Failure(errors));
-
                     return;
                 }
             }
+        }
+
+        // 2. Verificar se algum corpo [FromBody] veio nulo (opcional)
+        if (context.ActionArguments.Any(x => x.Value == null))
+        {
+            context.Result = new BadRequestObjectResult(Result<object>.Failure("O corpo da requisição não pode ser vazio."));
+            return;
         }
 
         await next();
