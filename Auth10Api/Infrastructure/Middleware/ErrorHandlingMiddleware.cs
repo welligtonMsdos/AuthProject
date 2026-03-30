@@ -34,7 +34,7 @@ public class ErrorHandlingMiddleware
             {
                 Success = false,
                 Message = "Internal Server Error.",
-                Errors = ex.ToString() // Use ToString() para ver o StackTrace e entender ONDE quebra
+                Errors = ex.ToString() 
             };
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));
