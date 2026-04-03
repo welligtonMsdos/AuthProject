@@ -22,6 +22,21 @@ public class ErrorHandlingMiddleware
         {
             await _next(context);
         }
+        catch (BusinessException ex)
+        {
+            context.Response.ContentType = "application/json";
+
+            context.Response.StatusCode = 400;
+
+            var response = Result<object>.Failure(ex.Message);
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Critical Error");

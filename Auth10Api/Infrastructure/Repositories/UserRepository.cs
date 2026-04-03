@@ -1,4 +1,5 @@
-﻿using Auth10Api.Application.Dtos;
+﻿using Auth10Api.Application.Common;
+using Auth10Api.Application.Dtos;
 using Auth10Api.Domain.Entities;
 using Auth10Api.Domain.Interfaces;
 using Auth10Api.Infrastructure.Data;
@@ -54,11 +55,11 @@ public class UserRepository : IUserRepository
             .Find(u => u.Email == userLoginDto.Email && u.Active)
             .FirstOrDefaultAsync();
 
-        if (user == null) throw new Exception("User not found.");
+        if (user == null) throw new BusinessException("User not found.");
 
         bool verified = BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.Password);
 
-        if (!verified) throw new Exception("Invalid password.");
+        if (!verified) throw new BusinessException("Invalid password.");
 
         return user;
     }
