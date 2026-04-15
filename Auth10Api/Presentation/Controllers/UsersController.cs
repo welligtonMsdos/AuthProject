@@ -20,8 +20,17 @@ public class UsersController : ControllerBase
     } 
    
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Post([FromBody] UserCreateDto userCreateDto)
     {
+        var userExists = await _service.ExistsByEmailAsync(userCreateDto.Email);
+
+        if (userExists)
+        {
+            return Conflict(Result<object>.Failure("Email already in use"));
+        }
+
         var newUser = await _service.PostAsync(userCreateDto);
 
         return CreatedAtAction(
@@ -30,7 +39,14 @@ public class UsersController : ControllerBase
             Result<UserDto>.Ok(newUser, "User successfully created!")
         );
     }
-        
+
+    [AllowAnonymous]
+    [HttpPost("[Action]")]    
+    public async Task<IActionResult> SignUp([FromBody] UserCreateDto userCreateDto)
+    {
+        return await Post(userCreateDto);
+    }
+
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] string? email)
     {

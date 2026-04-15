@@ -47,7 +47,7 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync();
 
         return user;
-    }
+    }   
 
     public async Task<User> GetDataLoginAsync(UserLoginDto userLoginDto)
     {
@@ -110,5 +110,12 @@ public class UserRepository : IUserRepository
 
             return false;
         }
+    }
+
+    public async Task<bool> ExistsByEmailAsync(string email)
+    {
+        return await _context.Users
+                        .Find(u => u.Email == email)
+                        .AnyAsync();
     }
 }

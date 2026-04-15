@@ -65,7 +65,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IMongoClient>(sp => {
 
     var connectionString = builder.Configuration.GetConnectionString("AuthConnection");
-    
+        
     return new MongoClient(connectionString);
 });
 
