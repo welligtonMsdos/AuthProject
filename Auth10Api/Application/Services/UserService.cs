@@ -1,4 +1,5 @@
-﻿using Auth10Api.Application.Dtos;
+﻿using Auth10Api.Application.Common;
+using Auth10Api.Application.Dtos;
 using Auth10Api.Application.Extensions;
 using Auth10Api.Application.Interfaces;
 using Auth10Api.Application.Validators;
@@ -132,5 +133,10 @@ public class UserService : IUserService
         ArgumentNullException.ThrowIfNull(user);
 
         return await _repository.DeleteAsync(id);
+    }
+
+    public async Task<bool> ExistsByEmailAsync(string email)
+    {
+        return await _repository.ExistsByEmailAsync(email);
     }
 }

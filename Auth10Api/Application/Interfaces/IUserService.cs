@@ -11,4 +11,5 @@ public interface IUserService
     Task<UserDataLoginDto> GetDataLoginAsync(UserLoginDto userLoginDto);    
     Task<UserDto> PutAsync(string id, UserUpdateDto userUpdated);
     Task<bool> DeleteAsync(string id);
+    Task<bool> ExistsByEmailAsync(string email);
 }

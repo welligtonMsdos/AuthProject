@@ -1,6 +1,7 @@
 ﻿using Auth10Api.Application.Common;
 using Auth10Api.Application.Dtos;
 using Auth10Api.Application.Interfaces;
+using Auth10Api.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Auth10Api.Presentation.Controllers;
@@ -29,5 +30,5 @@ public class AuthController : ControllerBase
         var token = _tokenService.GenerateToken(user);
 
         return Ok(Result<Task<string>>.Ok(token));
-    }
+    }    
 }
